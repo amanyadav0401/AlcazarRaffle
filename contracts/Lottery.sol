@@ -74,12 +74,43 @@ function buyTicket(uint _raffleNumber, uint _noOfTickets)payable public nonReent
       }
 }
 
+function updateRaffle(uint _raffleNumber, uint _maxTickets, bool _ticketBuyOption, uint _ticketPrice, uint _startTime, uint _endTime) public onlyOwner{
+     RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+     require(block.timestamp<raffleInfo.startTime,"Raffle already started.");
+     require(_startTime>block.timestamp,"Past time entered.");
+     require(_endTime>_startTime,"Endtime cannot be before start time");
+     raffleInfo.maxTickets = _maxTickets;
+     raffleInfo.ticketBuyOption = _ticketBuyOption;
+     raffleInfo.ticketPrice = _ticketPrice;
+     raffleInfo.startTime = _startTime;
+     raffleInfo.endTime = _endTime;
+ }
+
+ function updateRewardToken(uint _raffleNumber, address _rewardToken) external onlyOwner{
+     RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+     require(block.timestamp<raffleInfo.startTime,"Raffle already started.");
+     raffleInfo.raffleRewardToken = _rewardToken;
+ }
+
+ function updateRewardPercent(uint _raffleNumber, uint _rewardBP) external onlyOwner{
+     RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+     require(block.timestamp<raffleInfo.startTime,"Raffle already started.");
+     raffleInfo.rewardPercent = _rewardBP;
+ }
+
  function declareWinner(uint _randomWinner, uint _raffleNumber) public onlyOwner {
       RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
       uint totalApplicants = raffleInfo.ticketCounter;
       uint winnerNo = (_randomWinner%totalApplicants)+1;
       address winner = raffleInfo.userInfo[winnerNo].userAddress;
       raffleInfo.winner = winner;
+  }
+
+ function claimReward(uint _raffleNumber) public {
+    RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+    uint reward = ((raffleInfo.ticketPrice*raffleInfo.ticketCounter)*raffleInfo.rewardPercent)/10000;
+    require(msg.sender==raffleInfo.winner,"You are not the winner");
+    IERC20(raffleInfo.raffleRewardToken).safeTransfer(msg.sender,reward);
  }
 
 
