@@ -19,9 +19,9 @@ async function main() {
     console.log("after");
   
     await hre.run("verify:verify", {
-        address: "0x90ea248Eaa447a1F5c8E7EA09d36e1AEc2397Ad5",
+        address: "0x02d5D268F336053520A339e15cababF3ECD9575D",
         constructorArguments: [],
-        contract: "contracts/SaitaStake.sol:SaitaStaking",
+        contract: "contracts/token.sol:Alcazar",
       });
     
 }

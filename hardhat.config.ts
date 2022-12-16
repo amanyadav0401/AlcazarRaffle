@@ -36,6 +36,11 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
+
+    goerli:{
+      url: process.env.Goerli_URL || "",
+      accounts: process.env.PRIVATE_KEY!== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     
     // ropsten: {
     //   url: "https://ropsten.infura.io/v3/f0a935ee24704d068180510782b60fd0",

@@ -15,7 +15,7 @@ function sleep(ms: any) {
 async function main() {
   // We get the contract to deploy
   const owner = "0x8a4E0e0C516B879084f047AE7428cA4a246Ad86A";
-  
+
   const staking1 = await ethers.getContractFactory("SaitaStaking");
   const staking = await staking1.deploy();
   await sleep(4000);
@@ -33,3 +33,6 @@ main()
 
 //   Token1 0x82A902CA9F6690176bcb97a0ae7360A85317D51E
 //   SaitaMask 0xaD254d1019D4db873Ca7eD0Ff253602bCe102589
+
+
+///0x139201D8Eedb225087E4dA4a32d983F77C84E9cf ----- Chainlink randomNumber
