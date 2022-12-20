@@ -111,6 +111,7 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         uint256 _endTime,
         address _rewardToken
     ) public  onlyOperator{
+        require(block.timestamp<_endTime,"Provide future time value.");
         totalRaffles++;
         RaffleInfo storage raffleEntry = Raffle[totalRaffles];
         raffleEntry.raffleName = _raffleName;
@@ -233,6 +234,7 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
         require(msg.sender == raffleInfo.winner, "You are not the winner");
         bool success = IERC20(raffleInfo.raffleRewardToken).transfer(msg.sender, raffleInfo.raffleRewardTokenAmount);
+        raffleInfo.raffleRewardTokenAmount = 0;
         emit RewardClaimed(msg.sender, raffleInfo.raffleRewardToken, raffleInfo.raffleRewardTokenAmount);
         return success;
     }
