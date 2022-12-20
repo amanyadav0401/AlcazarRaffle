@@ -9,7 +9,6 @@ import './libraries/UniswapV2Library.sol';
 import './interfaces/IUniswapV2Router01.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
-import 'hardhat/console.sol';
 
 contract UniswapV2Router01 {
     address public immutable  factory;
@@ -209,7 +208,7 @@ contract UniswapV2Router01 {
         payable
         ensure(deadline)
         returns (uint[] memory amounts)
-    {   
+    {
         require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsOut(factory, msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');

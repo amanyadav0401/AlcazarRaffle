@@ -5,8 +5,7 @@ import {
   expandTo6Decimals,
 } from "../test/utilities/utilities";
 import {
-  SaitaStaking,
-  SaitaStaking__factory,
+  Lottery,
 } from "../typechain";
 
 function sleep(ms: any) {
@@ -14,13 +13,10 @@ function sleep(ms: any) {
 }
 async function main() {
   // We get the contract to deploy
-  const owner = "0x8a4E0e0C516B879084f047AE7428cA4a246Ad86A";
-
-  const staking1 = await ethers.getContractFactory("SaitaStaking");
-  const staking = await staking1.deploy();
+  const lottery1 = await ethers.getContractFactory("Lottery");
+  const lottery = await lottery1.deploy("0x02d5D268F336053520A339e15cababF3ECD9575D",1234,"0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D","0x8008985282aCa5835F09c3ffE09C9B380b2cEFd0","0x8008985282aCa5835F09c3ffE09C9B380b2cEFd0");
   await sleep(4000);
-  await staking.initialize("0x6410285e47A98D5885169CB1f120BA976724C370");
-  console.log("SaitaStaking Deployed", staking.address);
+  console.log("Lottery Deployed", lottery.address);
 }
 
 main()
@@ -30,9 +26,5 @@ main()
     process.exit(1);
   });
 
-
-//   Token1 0x82A902CA9F6690176bcb97a0ae7360A85317D51E
-//   SaitaMask 0xaD254d1019D4db873Ca7eD0Ff253602bCe102589
-
-
-///0x139201D8Eedb225087E4dA4a32d983F77C84E9cf ----- Chainlink randomNumber
+  //SaitaAddress - 0x03CcfbE179286f8EDBd0d7660dd848a475960427 
+  //SaitaAddress BSC - 0x6430dDbEF3511b18D933BF4f29E25D62Bb35b715 

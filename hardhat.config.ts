@@ -27,7 +27,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 const config: HardhatUserConfig = {
 
   solidity: {
-    version: "0.8.7",
+    version: "0.8.14",
     settings: {
       optimizer: {
         enabled: true,
@@ -36,20 +36,20 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
-
-    goerli:{
-      url: process.env.Goerli_URL || "",
-      accounts: process.env.PRIVATE_KEY!== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
     
-    // ropsten: {
-    //   url: "https://ropsten.infura.io/v3/f0a935ee24704d068180510782b60fd0",
-    //   accounts: [`0x${ROPSTEN_PRIVATE_KEY}`]
-    // },
-    // rinkeby: {
-    //   url:process.env.RINKEBY_URL || "",
-    //   accounts:process.env.RINKEBY_PRIVATE_KEY!== undefined ? [process.env.RINKEBY_PRIVATE_KEY] : [],
-    //  },
+    
+    goerli: {
+      url:process.env.GOERLI_URL || "",
+      accounts:process.env.PRIVATE_KEY!== undefined ? [process.env.PRIVATE_KEY] : [],
+     },
+     EthereumMainnet : { url: process.env.ETHEREUM_URL || "",
+     accounts: process.env.ETHEREUM_PRIVATE_KEY!==undefined ? [process.env.ETHEREUM_PRIVATE_KEY]:[],
+     },
+     BSCTestNet:{
+      url: process.env.BSC_URL || "",
+      accounts: process.env.BSC_PRIVATE_KEY!==undefined ? [process.env.BSC_PRIVATE_KEY]:[],
+    },
+     
     // networks: {
     //   rinkeby: {
     //     url: process.env.RINKEBY_URL || "",
@@ -93,7 +93,7 @@ const config: HardhatUserConfig = {
    
 
   etherscan: {
-    apiKey: process.env.ROPSTEN_API,
+    apiKey: process.env.BSC_API,
   },
 };
 
