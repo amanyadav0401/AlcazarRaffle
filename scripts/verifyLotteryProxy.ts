@@ -9,9 +9,9 @@ async function main() {
     console.log("after");
   
     await hre.run("verify:verify", {
-        address: "0x19179e713486f9FE2e38DE770242eE4A4a00cf40",
+        address: "0x0a42d128d7702E1c195A7207d29674D20E8D6156",
         constructorArguments: [],
-        contract: "contracts/OwnedUpgradeabilityProxy.sol:OwnedUpgradeabilityProxy",
+        contract: "contracts/Lottery2.sol:Lottery2",
       });
     
 }

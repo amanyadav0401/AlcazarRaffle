@@ -42,13 +42,13 @@ const config: HardhatUserConfig = {
       url:process.env.GOERLI_URL || "",
       accounts:process.env.PRIVATE_KEY!== undefined ? [process.env.PRIVATE_KEY] : [],
      },
-     EthereumMainnet : { url: process.env.ETHEREUM_URL || "",
-     accounts: process.env.ETHEREUM_PRIVATE_KEY!==undefined ? [process.env.ETHEREUM_PRIVATE_KEY]:[],
-     },
-     BSCTestNet:{
-      url: process.env.BSC_URL || "",
-      accounts: process.env.BSC_PRIVATE_KEY!==undefined ? [process.env.BSC_PRIVATE_KEY]:[],
-    },
+    //  EthereumMainnet : { url: process.env.ETHEREUM_URL || "",
+    //  accounts: process.env.ETHEREUM_PRIVATE_KEY!==undefined ? [process.env.ETHEREUM_PRIVATE_KEY]:[],
+    //  },
+    //  BSCTestNet:{
+    //   url: process.env.BSC_URL || "",
+    //   accounts: process.env.BSC_PRIVATE_KEY!==undefined ? [process.env.BSC_PRIVATE_KEY]:[],
+    // },
      
     // networks: {
     //   rinkeby: {
@@ -93,7 +93,7 @@ const config: HardhatUserConfig = {
    
 
   etherscan: {
-    apiKey: process.env.BSC_API,
+    apiKey: process.env.ETHERSCAN_API,
   },
 };
 

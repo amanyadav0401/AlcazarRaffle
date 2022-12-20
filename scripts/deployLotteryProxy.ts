@@ -5,7 +5,7 @@ import {
   expandTo6Decimals,
 } from "../test/utilities/utilities";
 import {
-  Lottery,
+  Lottery2,
 } from "../typechain";
 
 function sleep(ms: any) {
@@ -13,8 +13,8 @@ function sleep(ms: any) {
 }
 async function main() {
   // We get the contract to deploy
-  const lottery1 = await ethers.getContractFactory("Lottery");
-  const lottery = await lottery1.deploy("0x02d5D268F336053520A339e15cababF3ECD9575D",7850,"0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D","0x8008985282aCa5835F09c3ffE09C9B380b2cEFd0","0x8008985282aCa5835F09c3ffE09C9B380b2cEFd0");
+  const lottery2 = await ethers.getContractFactory("Lottery2");
+  const lottery = await lottery2.deploy();
   await sleep(4000);
   console.log("Lottery Deployed", lottery.address);
 }
@@ -25,6 +25,6 @@ main()
     console.error(error);
     process.exit(1);
   });
-
-  //SaitaAddress - 0x03CcfbE179286f8EDBd0d7660dd848a475960427 
+   //Subscription id - 7850
+   //SaitaAddress - 0x03CcfbE179286f8EDBd0d7660dd848a475960427 
   //SaitaAddress BSC - 0x6430dDbEF3511b18D933BF4f29E25D62Bb35b715 
