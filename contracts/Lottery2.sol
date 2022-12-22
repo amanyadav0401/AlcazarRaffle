@@ -8,13 +8,14 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./VRFv2Consumer.sol";
 import "./mock_router/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "./libraries/RaffleInfo.sol";
 
 contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
     using SafeERC20 for IERC20;
     uint256 public totalRaffles;
-    address payable public  profitWallet1;
-    address payable public profitWallet2;
-    address public burnWallet;
+    uint256 public totalBurnAmount;
+    address  payable public  profitWallet1;
+    address  payable public profitWallet2;
     address public operator;
     address public admin;
     IERC20 alcazarToken;
@@ -25,36 +26,12 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
     uint16 public profitSplit1BP;
     uint public totalRevenue;
 
-
-    // Information regarding individual raffle will be stored in the following struct.
-    struct RaffleInfo {
-        uint256 number;
-        string raffleName;
-        uint16 maxTickets;
-        uint256 ticketPrice;
-        uint16 ticketCounter;
-        uint256 startTime;
-        uint256 endTime;
-        address raffleRewardToken;
-        uint256 raffleRewardTokenAmount;
-        address winner;
-        uint256 winningTicket;
-        uint16 rewardPercent; // How much of the total tokens or eth will be rewarded from the total ticket buying price. In BP 10000.
-        uint16 burnPercent;
-        mapping(address => UserTickets) userTotalTickets;
-        mapping(uint256 => address) ticketOwner;
-        mapping(address=>uint) totalTicketsPerOwner;
-    }
-
-    struct UserTickets {
-        uint256[] ticketsNumber;
-    }
-
-
-    mapping(uint256 => RaffleInfo) public Raffle;
+    mapping(uint256 => RaffleStorage.RaffleInfo) public Raffle;
 
     // stores ticket numbers for every user for a given raffle. RaffleNumber => UserAddress => UserTickets
-    mapping(uint=>mapping(address=>UserTickets)) userTicketNumbersInRaffle; 
+    mapping(uint=>mapping(address=>RaffleStorage.UserTickets)) userTicketNumbersInRaffle; 
+
+    mapping(uint=>uint) public BurnAmountPerRaffle;
 
     event RaffleCreated(uint _raffleNumber,string _raffleName, uint16 _maxTickets, uint256 _ticketPrice, uint256 _startTime, uint256 _endTime, uint16 rewardPercent, address _rewardToken) ; 
     
@@ -72,6 +49,8 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
 
     event RewardClaimed(address _to, address _rewardToken, uint _amount);
 
+    event burnCollected(uint256 _amount, address _to);
+
 
 
     modifier onlyAdmin() {
@@ -84,10 +63,9 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         _;
     }
 
-    function initialize( address _operator,uint64 subscriptionId,
+    function initialize( uint64 subscriptionId,address _operator,
         address _admin, IUniswapV2Router02 _router,IERC20 _alcazarToken,
-        address payable _profitWallet1, address payable _profitWallet2, 
-        address _burnWallet, address _weth, uint16 _profitPercent, 
+        address payable _profitWallet1, address payable _profitWallet2, address _weth, uint16 _profitPercent, 
         uint16 _burnPercent, uint16 _profitSplit1BP) external initializer{
          operator = _operator;
          admin = _admin;
@@ -95,7 +73,6 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
          router = _router;
          profitWallet1 = _profitWallet1;
          profitWallet2 = _profitWallet2;
-         burnWallet = _burnWallet;
          WETH = _weth;
          profitPercent = _profitPercent;
          burnPercent = _burnPercent;
@@ -113,7 +90,7 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
     ) public  onlyOperator{
         require(block.timestamp<_endTime,"Provide future time value.");
         totalRaffles++;
-        RaffleInfo storage raffleEntry = Raffle[totalRaffles];
+        RaffleStorage.RaffleInfo storage raffleEntry = Raffle[totalRaffles];
         raffleEntry.raffleName = _raffleName;
         raffleEntry.maxTickets = _maxTickets;
         raffleEntry.number = totalRaffles;
@@ -126,25 +103,18 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         emit RaffleCreated(totalRaffles,_raffleName, _maxTickets, _ticketPrice, _startTime, _endTime, 10000 - profitPercent-burnPercent,_rewardToken);
     }
 
-    function updateBurnWalletAddress(address _address) external  onlyAdmin{
-        burnWallet = _address;
-        emit BurnWalletUpdated(burnWallet);
-    }
-
-    function updateBurnPercent(uint16 _bp) external  onlyAdmin{
+    function updateBurnPercent(uint16 _bp) external onlyAdmin{
         burnPercent = _bp;
         emit BurnPercentUpdated(burnPercent);
     }
 
     function updateProfit1Address(address payable _profitWallet1) external onlyAdmin{
         profitWallet1 = _profitWallet1;
-        
         emit ProfitWallet1Updated(_profitWallet1);
     }
 
      function updateProfit2Address(address payable _profitWallet2) external onlyAdmin{
         profitWallet2 = _profitWallet2;
-
         emit ProfitWallet2Updated(_profitWallet2);
     }
 
@@ -166,7 +136,7 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         payable
         nonReentrant
     {
-        RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+        RaffleStorage.RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
         require(raffleInfo.endTime>block.timestamp,"Buying ticket time over!");
         require(
             raffleInfo.ticketCounter + _noOfTickets <= raffleInfo.maxTickets,
@@ -183,8 +153,10 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
             
             raffleInfo.ticketOwner[raffleInfo.ticketCounter] = msg.sender;
         }
+        totalBurnAmount += (msg.value*raffleInfo.burnPercent)/10000;
+        BurnAmountPerRaffle[_raffleNumber] +=(msg.value*raffleInfo.burnPercent)/10000;
+        splitProfit(_raffleNumber,_noOfTickets);
         emit BuyTicket(_raffleNumber, msg.sender,ticketStart, raffleInfo.ticketCounter );
-        raffleInfo.totalTicketsPerOwner[msg.sender] += _noOfTickets;
     }
 
 
@@ -192,7 +164,7 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         external
         onlyOperator
     {
-        RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+        RaffleStorage.RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
         require(
             block.timestamp < raffleInfo.startTime,
             "Raffle already started."
@@ -204,18 +176,28 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
            return Raffle[_raffleNumber].ticketOwner[_ticketNumber];
     }
 
-    function splitProfit(uint _raffleNumber) external nonReentrant onlyOperator{
-        RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
-        uint totalAmount = raffleInfo.ticketCounter*raffleInfo.ticketPrice;
+    function splitProfit(uint _raffleNumber,uint16 _noOfTickets) internal   {
+        RaffleStorage.RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+        uint totalAmount = _noOfTickets*raffleInfo.ticketPrice;
         uint16 profitpercent = 10000 - raffleInfo.rewardPercent - raffleInfo.burnPercent;
         uint profitAmount = (profitpercent*totalAmount)/10000;
         uint splitWallet1Amount = (profitAmount*profitSplit1BP)/10000;
-        profitWallet1.call{value:splitWallet1Amount}("");
-        profitWallet2.call{value:profitAmount-splitWallet1Amount}("");
+        (bool sent,) =profitWallet1.call{value: splitWallet1Amount}("");
+        (bool success,) = profitWallet2.call{value:profitAmount-splitWallet1Amount}("");
+        require(sent && success);
+    }
+
+    function collectBurnReward(address _to) external nonReentrant returns(bool){
+        uint amount = totalBurnAmount;
+        totalBurnAmount = 0;
+        (bool success,) = _to.call{value: amount}("");
+        require(success);
+        emit burnCollected(amount, _to);
+        return success;
     }
 
     function declareWinner(uint256 _raffleNumber) external  onlyOperator{
-        RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+        RaffleStorage.RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
         require(block.timestamp > raffleInfo.endTime,"Raffle not over yet!");
         uint256 totalTicketsSold = raffleInfo.ticketCounter;
         requestRandomWords();
@@ -226,12 +208,10 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         raffleInfo.rewardPercent) / 10000;
         uint amount = swapRewardInToken(raffleInfo.raffleRewardToken, reward);
         raffleInfo.raffleRewardTokenAmount = amount;
-        burnWallet.call{value: ((raffleInfo.ticketPrice * raffleInfo.ticketCounter) *
-        raffleInfo.burnPercent) / 10000}("");
         }
 
     function claimReward(uint256 _raffleNumber) external nonReentrant returns(bool){
-        RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
+        RaffleStorage.RaffleInfo storage raffleInfo = Raffle[_raffleNumber];
         require(msg.sender == raffleInfo.winner, "You are not the winner");
         bool success = IERC20(raffleInfo.raffleRewardToken).transfer(msg.sender, raffleInfo.raffleRewardTokenAmount);
         raffleInfo.raffleRewardTokenAmount = 0;

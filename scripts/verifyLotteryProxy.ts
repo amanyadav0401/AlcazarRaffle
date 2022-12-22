@@ -9,7 +9,7 @@ async function main() {
     console.log("after");
   
     await hre.run("verify:verify", {
-        address: "0x0a42d128d7702E1c195A7207d29674D20E8D6156",
+        address: "0x4fcA6eEAf731d659465107D36E6c5BB11a004D81",
         constructorArguments: [],
         contract: "contracts/Lottery2.sol:Lottery2",
       });
