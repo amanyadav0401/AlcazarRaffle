@@ -18,8 +18,8 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
     address  payable public profitWallet2;
     address public operator;
     address public admin;
-    IERC20 alcazarToken;
-    address WETH;
+    IERC20 public alcazarToken;
+    address public WETH;
     IUniswapV2Router02 public router;
     uint16 public profitPercent; // in BP 10000.
     uint16 public burnPercent;
@@ -156,6 +156,7 @@ contract Lottery2 is ReentrancyGuard, Initializable, VRFv2Consumer {
         totalBurnAmount += (msg.value*raffleInfo.burnPercent)/10000;
         BurnAmountPerRaffle[_raffleNumber] +=(msg.value*raffleInfo.burnPercent)/10000;
         splitProfit(_raffleNumber,_noOfTickets);
+        totalRevenue +=(msg.value*(10000-raffleInfo.rewardPercent))/10000;
         emit BuyTicket(_raffleNumber, msg.sender,ticketStart, raffleInfo.ticketCounter );
     }
 
